@@ -1,7 +1,7 @@
-# requirements.txt gerado no terminal pelo comando: pip freeze > requirements.txt
-from flask import Flask, jsonify, request
+from flask import Flask, request
+from flask_restful import Resource, Api
 import json
-
+from skills import skills
 app = Flask(__name__)
 
 developers = [
@@ -17,10 +17,10 @@ developers = [
     }
 ]
 
-# Devolve um desenvolvedor pelo ID, e também altera e deleta um desenvolvedor via POSTMAN
-@app.route('/dev/<int:id>/', methods=['GET', 'PUT', 'DELETE'])
-def developer (id):
-    if request.method == 'GET':
+api = Api(app)
+
+class Developer(Resource):
+    def get(self, id):
         try:
             response = developers[id]
         except IndexError:
@@ -29,27 +29,35 @@ def developer (id):
         except Exception:
             mensagem = 'Erro desconhecido. Contate o Administrador da Rede.'
             response = {'status': 'erro', 'mensagem': mensagem}
-        return jsonify(response)
-    elif request.method == 'PUT':
-        dados = json.loads(request.data)
+        return response
+        #return {'nome:' : 'Rodrigo Vieira'}
+    def put(self, id):
+        dados = json.loads ( request.data )
         developers[id] = dados
-        return jsonify(dados)
-    elif request.method == 'DELETE':
+        return dados
+        #return {'nome:' : 'Rodrigo Vieira'}
+    def delete(self, id):
         developers.pop(id)
-        return jsonify({'status': 'sucesso', 'mensagem': 'Registro Excluido!'})
+        return {'status': 'sucesso', 'mensagem': 'Registro Excluido!'}
+        #return {'nome:' : 'Rodrigo Vieira'}
+    def post(self):
+        return {'nome:' : 'Rodrigo Vieira'}
 
 # Lista todos os desenvolvedores e permite registrar um novo desenvolvedor
-@app.route('/dev/', methods=['GET', 'POST'])
-def list_developers():
-    if request.method == 'POST':
+class list_developers(Resource):
+    def get(self):
+        return developers
+
+    def post(self):
         dados = json.loads(request.data)
         posit = len(developers)
         dados['id'] = posit
         developers.append(dados)
-        return jsonify(developers[posit])
-        #return jsonify ( {'status': 'sucesso', 'mensagem': 'Registro Incluido!'} )
-    elif request.method == 'GET':
-        return jsonify(developers)
+        return (developers[posit])
+
+api.add_resource(Developer, '/dev/<int:id>/')
+api.add_resource(list_developers, '/dev/')
+api.add_resource(skills, '/skills/')
 
 if __name__ == '__main__':
     app.run(debug=True)
